@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مستودعات salah-git</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 30px 0;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .label {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .repos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .repo-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border-right: 5px solid #667eea;
+        }
+
+        .repo-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        }
+
+        .repo-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .repo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin-left: 15px;
+        }
+
+        .repo-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .repo-name:hover {
+            color: #667eea;
+        }
+
+        .repo-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            min-height: 50px;
+        }
+
+        .repo-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .stat svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .repo-language {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+            padding: 50px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .repos-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 مستودعاتي على GitHub</h1>
+            <p>استكشف جميع المشاريع والأعمال البرمجية</p>
+        </header>
+
+        <div class="stats" id="stats">
+            <!-- Will be filled by JavaScript -->
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>جاري تحميل المستودعات...</p>
+        </div>
+
+        <div class="repos-grid" id="repos">
+            <!-- Will be filled by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const username = 'salah-git';
+        
+        async function fetchRepos() {
+            try {
+                const response = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=100`);
+                const repos = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                // Display stats
+                displayStats(repos);
+                
+                // Display repos
+                displayRepos(repos);
+                
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `
+                    <div class="error">
+                        <h2>حدث خطأ في تحميل البيانات</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayStats(repos) {
+            const totalStars = repos.reduce((sum, repo) => sum + repo.stargazers_count, 0);
+            const totalForks = repos.reduce((sum, repo) => sum + repo.forks_count, 0);
+            const languages = [...new Set(repos.map(r => r.language).filter(l => l))];
+            
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="number">${repos.length}</div>
+                    <div class="label">مستودع</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${totalStars}</div>
+                    <div class="label">نجمة</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${totalForks}</div>
+                    <div class="label">فورك</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${languages.length}</div>
+                    <div class="label">لغة برمجة</div>
+                </div>
+            `;
+        }
+
+        function displayRepos(repos) {
+            const reposContainer = document.getElementById('repos');
+            
+            if (repos.length === 0) {
+                reposContainer.innerHTML = '<p style="color: white; text-align: center;">لا توجد مستودعات</p>';
+                return;
+            }
+            
+            reposContainer.innerHTML = repos.map(repo => `
+                <div class="repo-card">
+                    <div class="repo-header">
+                        <div class="repo-icon">📦</div>
+                        <a href="${repo.html_url}" target="_blank" class="repo-name">
+                            ${repo.name}
+                        </a>
+                    </div>
+                    
+                    <p class="repo-description">
+                        ${repo.description || 'لا يوجد وصف متاح'}
+                    </p>
+                    
+                    <div class="repo-stats">
+                        <div class="stat">
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
+                            </svg>
+                            ${repo.stargazers_count}
+                        </div>
+                        <div class="stat">
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 2.122a2.25 2.25 0 10-1.5 0v.878A2.25 2.25 0 005.75 8.5h1.5v2.128a2.251 2.251 0 101.5 0V8.5h1.5a2.25 2.25 0 002.25-2.25v-.878a2.25 2.25 0 10-1.5 0v.878a.75.75 0 01-.75.75h-4.5A.75.75 0 015 6.25v-.878zm3.75 7.378a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm3-8.75a.75.75 0 100-1.5.75.75 0 000 1.5z"/>
+                            </svg>
+                            ${repo.forks_count}
+                        </div>
+                        <div class="stat">
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 9.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
+                                <path d="M8 0a8 8 0 100 16A8 8 0 008 0zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0z"/>
+                            </svg>
+                            ${repo.open_issues_count} مشكلة
+                        </div>
+                    </div>
+                    
+                    ${repo.language ? `<span class="repo-language">${repo.language}</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Load repos on page load
+        fetchRepos();
+    </script>
+</body>
+</html>
